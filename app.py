@@ -11,164 +11,120 @@ import plotly.graph_objects as go
 # CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Trader Estatístico", layout="wide", initial_sidebar_state="expanded")
 
-# --- CSS CUSTOMIZADO (ESTILO APPLE PREMIUM) ---
+# --- CSS ESTILO APPLE PREMIUM ---
 st.markdown("""
     <style>
-    .stApp {
-        background-color: #000000;
-        color: #f5f5f7;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    [data-testid="stSidebar"] {
-        background-color: #1c1c1e;
-        border-right: 1px solid #333;
-    }
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-        background-color: #007AFF;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-    .stButton>button:hover {
-        background-color: #0056b3;
-        transform: scale(1.02);
-    }
-    div.stDataFrame {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 15px;
-        padding: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    .stApp { background-color: #000000; color: #f5f5f7; font-family: -apple-system, sans-serif; }
+    [data-testid="stSidebar"] { background-color: #1c1c1e; border-right: 1px solid #333; }
+    .stButton>button { border-radius: 20px; background-color: #007AFF; color: white; border: none; font-weight: 500; transition: 0.3s; }
+    .stButton>button:hover { background-color: #0056b3; transform: scale(1.02); }
+    div.stDataFrame { background: rgba(255, 255, 255, 0.05); border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.1); }
+    h1 { font-weight: 600 !important; letter-spacing: -0.5px !important; }
+    #MainMenu, footer, header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# --- SISTEMA DE LOGIN PRIVADO ---
+# --- LOGIN ---
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
     if not st.session_state["password_correct"]:
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
+        c1, c2, c3 = st.columns([1, 1, 1])
+        with c2:
             st.markdown("<div style='padding: 20px; background: #1c1c1e; border-radius: 20px; margin-top: 50px;'>", unsafe_allow_html=True)
-            st.markdown("<h2 style='text-align: center;'>Acesso Restrito</h2>", unsafe_allow_html=True)
-            pwd = st.text_input("Senha", type="password", placeholder="Digite sua senha")
+            pwd = st.text_input("Acesso Restrito", type="password", placeholder="Senha")
             if st.button("Entrar"):
-                if pwd == "SUA_SENHA_AQUI": # TROQUE SUA SENHA AQUI
+                if pwd == "SUA_SENHA_AQUI": # Defina sua senha aqui
                     st.session_state["password_correct"] = True
                     st.rerun()
-                else:
-                    st.error("Senha incorreta.")
+                else: st.error("Incorreto.")
             st.markdown("</div>", unsafe_allow_html=True)
         return False
     return True
 
-if not check_password():
-    st.stop()
+if not check_password(): st.stop()
 
 # --- CABEÇALHO ---
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    try:
-        st.image("logo.jpg", use_container_width=True)
-    except:
-        st.info("Suba o arquivo logo.jpg para o GitHub para exibir a imagem.")
-    st.markdown("<h1 style='text-align: center; font-size: 2.5rem;'>Pair Trading Scanner</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: #86868b; font-size: 1.2rem;'>Trader Estatístico • Cointegração em Tempo Real</p>", unsafe_allow_html=True)
+    try: st.image("logo.jpg", use_container_width=True)
+    except: st.info("Suba o logo.jpg no GitHub.")
+    st.markdown("<h1 style='text-align: center;'>Pair Trading Scanner</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #86868b;'>Trader Estatístico • Cointegração em Tempo Real</p>", unsafe_allow_html=True)
 
 st.markdown("---")
 
 # 1. UNIVERSO DE ATIVOS
 market_universe = {
-    'Tech_Mid_Small': ['AAL', 'CCL', 'F', 'PLTR', 'SNAP', 'PINS', 'UBER', 'HOOD', 'AFRM', 'SOFI', 'DKNG', 'U', 'RBLX', 'RIOT', 'MARA', 'DBX', 'BOX', 'GPRO', 'CLOV', 'MQ', 'COIN'],
-    'Financials': ['BAC', 'WFC', 'C', 'AIG', 'PFG', 'TFC', 'KEY', 'HBAN', 'RF', 'FITB', 'SLM', 'NYCB', 'SQ', 'PYPL', 'NU', 'PGR', 'MET', 'USB', 'SCHW'],
-    'Health_Care': ['CVS', 'PFE', 'BMY', 'GILD', 'VTRS', 'HLT', 'MRNA', 'BILI', 'TEVA', 'WBA', 'PZZA', 'PARA', 'RMNI'],
-    'Energy_Materials': ['XOM', 'CVX', 'OXY', 'HAL', 'SLB', 'KOS', 'RIG', 'APA', 'DVN', 'CLF', 'FCX', 'NEM', 'VALE', 'X', 'AA', 'MOS', 'CTRA'],
-    'Consumer_Retail': ['KO', 'PEP', 'TGT', 'KSS', 'M', 'AEO', 'SBUX', 'NCLH', 'RCL', 'GPS', 'JWN', 'WEN', 'QSR', 'CPRI', 'DLTR', 'LUV'],
-    'Industrials_Transp': ['GE', 'CSX', 'NSC', 'DAL', 'UAL', 'LUV', 'JBHT', 'XPO', 'CHRW', 'UPS', 'FDX', 'KSU', 'MAR']
+    'Tech': ['AAPL', 'MSFT', 'NVDA', 'AMD', 'TSLA', 'META', 'GOOGL', 'PLTR', 'UBER'],
+    'Finance': ['JPM', 'BAC', 'WFC', 'C', 'GS', 'MS', 'AXP', 'PYPL'],
+    'Consumer': ['KO', 'PEP', 'SBUX', 'NKE', 'TGT', 'WMT', 'COST'],
+    'Energy': ['XOM', 'CVX', 'OXY', 'SLB', 'HAL']
 }
 
 # 2. FUNÇÕES TÉCNICAS
-def calculate_half_life(residue):
-    delta_residue = residue.diff().dropna()
-    lagged_residue = residue.shift(1).dropna()
-    if len(lagged_residue) < 10: return 999
-    x = sm.add_constant(lagged_residue.values)
-    model = sm.OLS(delta_residue.values, x).fit()
-    lambda_val = model.params[1]
-    return -np.log(2) / lambda_val if lambda_val < 0 else 999
+def get_zscore_series(s1_data, s2_data, window=250):
+    y, x = s1_data.tail(window).values, sm.add_constant(s2_data.tail(window).values)
+    model = sm.OLS(y, x).fit()
+    beta = model.params[1]
+    residue = s1_data.tail(window) - (model.params[0] + beta * s2_data.tail(window))
+    return (residue - residue.mean()) / residue.std(), beta
 
-# 3. INTERFACE LATERAL
-st.sidebar.header("📊 Parâmetros")
-bp_limit = st.sidebar.number_input("Buying Power por Par ($)", value=1000)
-z_threshold = st.sidebar.slider("Z-Score de Entrada", 1.0, 3.0, 1.96)
-risk_target = st.sidebar.number_input("Risco Alvo ($)", value=15)
-z_stop = st.sidebar.number_input("Z-Score de Stop", value=4.0)
+# 3. SIDEBAR
+st.sidebar.header("📊 Configurações")
+z_thresh = st.sidebar.slider("Z-Score Entrada", 1.0, 3.0, 1.96)
+risk_usd = st.sidebar.number_input("Risco Alvo ($)", value=15)
 
-# 4. EXECUÇÃO
-if st.sidebar.button("RODAR SCANNER AGORA"):
+if st.sidebar.button("RODAR SCANNER"):
     all_tickers = [t for sub in market_universe.values() for t in sub]
-    with st.spinner('Analisando o mercado estatístico...'):
-        raw_data = yf.download(all_tickers, period='350d', interval='1d', auto_adjust=True, progress=False)
-        data = raw_data['Close'].dropna(axis=1)
+    with st.spinner('Escaneando distorções estatísticas...'):
+        data = yf.download(all_tickers, period='350d', progress=False)['Close'].dropna(axis=1)
 
     results = []
-    windows = [100, 120, 140, 160, 180, 200, 220, 240, 250]
-    progress_bar = st.progress(0)
-    sectors = list(market_universe.keys())
-
-    for i, sector in enumerate(sectors):
-        available = [t for t in market_universe[sector] if t in data.columns]
+    for sector, tickers in market_universe.items():
+        available = [t for t in tickers if t in data.columns]
         for s1, s2 in combinations(available, 2):
             try:
-                coint_count = sum(1 for w in windows if coint(data[s1].tail(w), data[s2].tail(w))[1] < 0.05)
-                if coint_count < 3: continue
-                y, x = data[s1].tail(250).values, sm.add_constant(data[s2].tail(250).values)
-                model = sm.OLS(y, x).fit()
-                beta = model.params[1]
-                if beta < 0.20: continue
-                residue = data[s1].tail(250) - (model.params[0] + beta * data[s2].tail(250))
-                z_score = (residue.iloc[-1] - residue.mean()) / residue.std()
-                if abs(z_score) >= z_threshold and abs(z_score) < z_stop:
-                    hl = calculate_half_life(residue)
-                    if 1 <= hl <= 30:
-                        p1, p2 = data[s1].iloc[-1], data[s2].iloc[-1]
-                        vol_res = residue.std()
-                        l1 = max(1, int(risk_target / (abs(z_score) * vol_res)))
-                        l2 = max(1, int(l1 * beta))
-                        while (l1 * p1 + l2 * p2) > bp_limit and l1 > 1:
-                            l1 -= 1
-                            l2 = max(1, int(l1 * beta))
-                        if (l1 * p1 + l2 * p2) <= bp_limit:
-                            results.append({
-                                "Setor": sector, "Ação": f"{s1}/{s2}", "Lotes": f"{l1}/{l2}",
-                                "Beta": round(beta, 2), "Z": round(z_score, 2),
-                                "Alvo($)": f"${(abs(z_score) * vol_res * l1):.2f}",
-                                "Stop($)": f"-${((z_stop - abs(z_score)) * vol_res * l1):.2f}",
-                                "HL": round(hl, 1), "Conf": f"{coint_count}/9"
-                            })
+                # Teste simplificado de cointegração para performance
+                p_val = coint(data[s1].tail(250), data[s2].tail(250))[1]
+                if p_val < 0.05:
+                    z_series, beta = get_zscore_series(data[s1], data[s2])
+                    z_last = z_series.iloc[-1]
+                    
+                    if abs(z_last) >= z_thresh:
+                        results.append({
+                            "Par": f"{s1}/{s2}",
+                            "Sinal": "VENDE/COMPRA" if z_last > 0 else "COMPRA/VENDE",
+                            "Z": round(z_last, 2),
+                            "Beta": round(beta, 2),
+                            "S1": s1, "S2": s2
+                        })
             except: continue
-        progress_bar.progress((i + 1) / len(sectors))
 
     if results:
-        df_final = pd.DataFrame(results).sort_values(by='Z', ascending=False, key=abs)
-        st.success(f"Oportunidades encontradas!")
-        st.dataframe(df_final, use_container_width=True)
+        df = pd.DataFrame(results)
+        st.success(f"{len(df)} Oportunidades!")
         
-        # Gráfico Exemplo do primeiro Par encontrado
-        st.markdown("### Visualização de Desvio (Top Par)")
+        # Tabela interativa
+        selected_row = st.selectbox("Selecione um par para visualizar o gráfico:", df["Par"])
+        st.dataframe(df.drop(columns=["S1", "S2"]), use_container_width=True)
+        
+        # Gráfico Dinâmico Plotly
+        row = df[df["Par"] == selected_row].iloc[0]
+        z_plot, _ = get_zscore_series(data[row["S1"]], data[row["S2"]])
+        
         fig = go.Figure()
-        fig.add_trace(go.Scatter(y=np.random.randn(100), mode='lines', line=dict(color='#007AFF', width=2)))
-        fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_color='#f5f5f7')
+        fig.add_trace(go.Scatter(y=z_plot, mode='lines', name='Z-Score', line=dict(color='#007AFF', width=2.5)))
+        fig.add_hline(y=z_thresh, line_dash="dash", line_color="#FF3B30", annotation_text="Entrada")
+        fig.add_hline(y=-z_thresh, line_dash="dash", line_color="#FF3B30")
+        fig.add_hline(y=0, line_color="white", opacity=0.3)
+        
+        fig.update_layout(
+            title=f"Histórico de Desvio: {selected_row}",
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+            font_color='#f5f5f7', height=400,
+            xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)')
+        )
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("Nenhuma oportunidade encontrada.")
-
-st.sidebar.markdown("---")
-st.sidebar.info("Saia da operação quando o Z chegar em 0.00.")
