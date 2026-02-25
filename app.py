@@ -8,6 +8,107 @@ from itertools import combinations
 from datetime import datetime
 
 # CONFIGURAÇÃO DA PÁGINA
+st.set_page_config(page_title="Trader Estatístico", layout="wide", initial_sidebar_state="expanded")
+
+# --- CSS CUSTOMIZADO (ESTILO APPLE) ---
+st.markdown("""
+    <style>
+    /* Fundo principal e fontes */
+    .stApp {
+        background-color: #000000;
+        color: #f5f5f7;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    /* Sidebar minimalista */
+    [data-testid="stSidebar"] {
+        background-color: #1c1c1e;
+        border-right: 1px solid #333;
+    }
+    
+    /* Botões estilo Apple */
+    .stButton>button {
+        width: 100%;
+        border-radius: 20px;
+        background-color: #007AFF;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #0056b3;
+        transform: scale(1.02);
+    }
+
+    /* Cards e Containers */
+    div.stDataFrame {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Títulos e Textos */
+    h1 {
+        font-weight: 600 !important;
+        letter-spacing: -0.5px !important;
+    }
+    
+    /* Esconder o menu padrão do Streamlit para parecer um app real */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- CABEÇALHO ---
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    try:
+        st.image("logo.jpg", use_container_width=True)
+    except:
+        pass
+    st.markdown("<h1 style='text-align: center; font-size: 2.5rem;'>Pair Trading Scanner</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #86868b; font-size: 1.2rem;'>Trader Estatístico • Cointegração em Tempo Real</p>", unsafe_allow_html=True)
+
+st.markdown("---")
+
+# --- SISTEMA DE LOGIN PRIVADO ---
+def check_password():
+    if "password_correct" not in st.session_state:
+        st.session_state["password_correct"] = False
+
+    if not st.session_state["password_correct"]:
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col2:
+            st.markdown("<div style='padding: 20px; background: #1c1c1e; border-radius: 20px;'>", unsafe_allow_html=True)
+            pwd = st.text_input("Acesso Restrito", type="password", placeholder="Digite sua senha")
+            if st.button("Entrar"):
+                if pwd == "SUA_SENHA_AQUI": # Defina sua senha aqui
+                    st.session_state["password_correct"] = True
+                    st.rerun()
+                else:
+                    st.error("Senha incorreta.")
+            st.markdown("</div>", unsafe_allow_html=True)
+        return False
+    return True
+
+if not check_password():
+    st.stop()
+
+# (Mantenha o restante do seu código original de cálculos e market_universe aqui...)
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+from statsmodels.tsa.stattools import coint
+from itertools import combinations
+from datetime import datetime
+
+# CONFIGURAÇÃO DA PÁGINA
 st.set_page_config(page_title="Trader Estatístico", layout="wide")
 
 # --- CABEÇALHO COM IMAGEM CENTRALIZADA E TÍTULOS ---
