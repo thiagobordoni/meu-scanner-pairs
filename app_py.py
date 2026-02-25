@@ -123,3 +123,4 @@ if st.sidebar.button("RODAR SCANNER AGORA"):
         st.dataframe(pd.DataFrame(results), use_container_width=True)
     else:
         st.warning("Nenhuma oportunidade encontrada.")
+        
